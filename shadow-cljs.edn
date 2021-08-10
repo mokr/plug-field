@@ -1,0 +1,27 @@
+{:nrepl    {:port 8002}
+
+ ;; Shadow-cljs server UI
+ :http     {:port 8001
+            :host "localhost"}
+
+ ;; Dev app
+ :dev-http {8000 "dev/resources/public"}
+
+ ;; Using lein for dependency and paths management for IntelliJ to work better with this lein (main lib code) + shadow-cljs (dev work) setup
+ :lein     {:profile "+dev"}
+
+ :builds   {:app
+                  {:target     :browser
+                   :output-dir "dev/resources/public/js"
+                   ;:output-dir "target/cljsbuild/public/js"
+                   :asset-path "/js"
+                   :modules    {:app {:init-fn plug-field.dev.app/init}}
+                   :devtools   {:watch-dir "dev/resources/public"
+                                :preloads  [re-frisk.preload]
+                                }
+                   :dev        {:closure-defines {"re_frame.trace.trace_enabled_QMARK_" true}}
+                   :release    {}}
+            :test {:target  :node-test, :output-to "target/test/test.js"
+                   :autorun true}}
+
+ }
