@@ -192,7 +192,7 @@
   [field-defaults field-value-cfg]
   [field-defaults
    {:k (:k field-value-cfg)}                                ;; Note: It's called :k instead of :field to avoid confusing with the Field we create for it
-   add-raw-value                                            ;; Allways. Do early so others can use it
+   add-raw-value                                            ;; Always. Do early so others can use it
    (decide-description field-value-cfg)
    (decide-display field-value-cfg)
    (decide-tooltip field-value-cfg)                         ;; After :display as we might want to use info that was looked up
@@ -203,22 +203,22 @@
    (decide-render field-value-cfg)])
 
 
-(defn- produce-factory-parts-for-field
-  "Create collection of factory parts for a Field based on ':key' in {:key value}
-  Will aid in producing Fields that are typically used as headers in tables.
-  These raw parts are functions, maps and nils"
-  [field-defaults field-cfg]
-  [field-defaults
-   {:k (:k field-cfg)}                                      ;; Note: It's called :k instead of :field to avoid confusing with the Field we create for it
-   add-raw-value                                            ;; Useful for plain field?
-   (decide-description field-cfg)
-   (decide-display field-cfg)
-   (decide-tooltip field-cfg)                               ;; After :display as we might want to use info that was looked up
-   (decide-class field-cfg)
-   (decide-react-key-attr field-cfg)
-   (decide-tag field-cfg)
-   (decide-handler :on-click field-cfg)
-   (decide-render field-cfg)])
+;(defn- produce-factory-parts-for-field
+;  "Create collection of factory parts for a Field based on ':key' in {:key value}
+;  Will aid in producing Fields that are typically used as headers in tables.
+;  These raw parts are functions, maps and nils"
+;  [field-defaults field-cfg]
+;  [field-defaults
+;   {:k (:k field-cfg)}                                      ;; Note: It's called :k instead of :field to avoid confusing with the Field we create for it
+;   add-raw-value                                            ;; Useful for plain field?
+;   (decide-description field-cfg)
+;   (decide-display field-cfg)
+;   (decide-tooltip field-cfg)                               ;; After :display as we might want to use info that was looked up
+;   (decide-class field-cfg)
+;   (decide-react-key-attr field-cfg)
+;   (decide-tag field-cfg)
+;   (decide-handler :on-click field-cfg)
+;   (decide-render field-cfg)])
 
 
 ;|-------------------------------------------------
@@ -294,33 +294,36 @@
 
 (defn make-factories
   "Create a collection of factory functions for given fields"
-  [parts-producer configs common-config field-defaults fields]
+  ;[parts-producer configs common-config field-defaults fields]
+  [configs common-config field-defaults fields]
+  ;(js/console.info ">>>FIELDS:" fields)
   {:pre  [(sequential? fields)
-          (fn? parts-producer)
+          ;(fn? parts-producer)
           (map? configs)
           ;(s/valid? ::$cfg/field-value-configs field-value-configs) ;;FIXME: The full config map, not just for a single field
           (map? common-config)]
    :post [(s/valid? ::$/factories %)]}
-  (let [xf (comp
-             (map #(-> (merge common-config                 ;; Contains e.g. :lookup and other features all configs should have access to. Note: A specific config can override are it it merge on top.
-                              (get configs %))              ;; Get the config for the field in question ..
-                       (assoc :k %)))                       ;; update config with the target field/key name.
-             (map #(config->field-factory
-                     field-defaults
-                     parts-producer
-                     %)))]
+  (let [parts-producer produce-factory-parts-for-field-value
+        xf             (comp
+                         (map #(-> (merge common-config     ;; Contains e.g. :lookup and other features all configs should have access to. Note: A specific config can override are it it merge on top.
+                                          (get configs %))  ;; Get the config for the field in question ..
+                                   (assoc :k %)))           ;; update config with the target field/key name.
+                         (map #(config->field-factory
+                                 field-defaults
+                                 parts-producer
+                                 %)))]
     (into [] xf fields)))
 
 
 ;|-------------------------------------------------
 ;| CONVENIENCE
 
-(def ^{:doc "Make field factories for map keys"}
-  make-field-factories
-  (partial make-factories produce-factory-parts-for-field))
-
-
-(def ^{:doc "Make field factories for map values"}
-  make-field-value-factories
-  (partial make-factories produce-factory-parts-for-field-value))
+;(def ^{:doc "Make field factories for map keys"}
+;  make-field-factories
+;  (partial make-factories produce-factory-parts-for-field))
+;
+;
+;(def ^{:doc "Make field factories for map values"}
+;  make-field-value-factories
+;  (partial make-factories produce-factory-parts-for-field-value))
 

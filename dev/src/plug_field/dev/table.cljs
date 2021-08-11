@@ -7,29 +7,35 @@
 
 
 (rf/reg-sub
-  :header/factories
+  ::header-factories
+  :<- [::sample/fields-config]
+  :<- [::sample/common-header-config]
+  :<- [::sample/field-defaults]
   :<- [::sample/target-fields]
-  :<- [:config/fields]
-  (fn [[target-fields]]
-    []
-    ))
+  pfrf/create-field-value-factories)
 
 
 (rf/reg-sub
-  :table/headers
-  :<- [:header/factories]
+  ::table-headers
+  :<- [::header-factories]
   ;:<- [:sample/entries]
-  (fn [headers-factories]
-    ;(map #(% {}) headers-factories)                       ;;TODO: Hmm
-    []
-    ))
+  pfrf/produce-with-factories)
 
+
+;(rf/reg-sub
+;  ::field-value-factories
+;  :<- [::sample/target-fields]
+;  :<- [::sample/field-values-config]
+;  :<- [::sample/common-content-config]
+;  :<- [::sample/field-defaults]
+;  pfrf/create-field-value-factories)
 
 (rf/reg-sub
   ::field-value-factories
-  :<- [::sample/target-fields]
   :<- [::sample/field-values-config]
-  :<- [::sample/common-config]
+  :<- [::sample/common-content-config]
+  :<- [::sample/field-defaults]
+  :<- [::sample/target-fields]
   pfrf/create-field-value-factories)
 
 
@@ -37,16 +43,18 @@
   ::table-contents
   :<- [::field-value-factories]
   :<- [:sample/entities]
-  pfrf/produce-value-fields-with-factories)
+  ;pfrf/produce-value-fields-with-factories
+  pfrf/produce-with-factories
+  )
 
 
 (rf/reg-sub
   :table/data
-  ;:<- [:table/headers]                                      ;; Use this
-  :<- [::sample/target-fields]                              ;;DEBUG
+  :<- [::table-headers]                                     ;; Use this
+  ;:<- [::sample/target-fields]                              ;;DEBUG
   :<- [::table-contents]
   (fn [[headers contents]]
-    ;(js/console.info headers)
+    ;(js/console.info "HEADERS:\n" headers)
     ;(js/console.info contents)
     {:headers      headers
      :content-rows contents}))
@@ -55,13 +63,20 @@
 ;|-------------------------------------------------
 ;| UI
 
+(defn row-of-fields [fields]
+  [:tr
+   (for [field fields]
+     ^{:key (:react-key field)}
+     [field])])
+
 ;;TODO: Go with 'header-rows' to allow for e.g. filter input below each header?
 (defn head-section [header-fields]
   [:thead
-   [:tr
-    (for [field header-fields]
-      ^{:key (str field)}
-      [:th (str field)])]])
+   [row-of-fields header-fields]
+   #_[:tr
+      (for [field header-fields]
+        ^{:key (str field)}
+        [:th (str field)])]])
 
 
 (defn content-row [fields]

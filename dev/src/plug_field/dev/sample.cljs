@@ -1,5 +1,6 @@
 (ns plug-field.dev.sample
-  (:require [re-frame.core :as rf]
+  (:require [plug-field.defaults :as defaults]
+            [re-frame.core :as rf]
             [clojure.string :as str]))
 
 (def target-fields
@@ -38,11 +39,12 @@
    :company/name    {:display "Company"}
    :user/age        {:display "Age"}
    :user/name       {:display "Name"}
+   :some/details    {:display "Details"}
    :user/vaccinated {:display "Vaccinated?"}})
 
 
 (rf/reg-sub
-  :config/fields
+  ::fields-config
   (fn [_ _]
     field-config))
 
@@ -82,9 +84,20 @@
 
 
 (rf/reg-sub
-  ::common-config
+  ::field-defaults
+  (fn [_ _]
+    defaults/field-defaults))
+
+
+(rf/reg-sub
+  ::common-content-config
   (fn [_ _]
     {:tag :td}))
+
+(rf/reg-sub
+  ::common-header-config
+  (fn [_ _]
+    {:tag :th}))
 
 (comment
   ;(sort (keys field-value-config))
