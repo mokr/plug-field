@@ -63,8 +63,6 @@
    :post [(s/valid? ::$/factory-part %)]}
   (cond
     (fn? tooltip) (fn [field-m entity]
-                    (js/console.info "(arity tooltip)" (arity tooltip))
-                    (js/console.info "field-value-cfg" field-value-cfg)
                     (assoc-in field-m [:attrs :title]
                               (case (arity tooltip)         ;; Note: No default case, as other arities are invalid and should cause error.
                                 1 (tooltip entity)
@@ -75,8 +73,9 @@
     :else nil))
 
 
-(defn- decide-display-value
-  "Decide on the value that will actually be displayed when this field is rendered."
+(defn- decide-display
+  "Decide on the value that will actually be displayed when this field is rendered.
+  At least when using the default render function."
   [{:keys [k
            lookup                                           ;; This comes in from common-config (unless field specific config has overridden it)
            display
@@ -99,7 +98,6 @@
                           (get-in lookup [k v])))
     ;; FUNCTION
     (fn? display) (fn [field-m entity]
-                    ;(println "v field-m" field-m)
                     (if-let [v (display field-m entity cfg)]
                       (assoc field-m :display v)
                       field-m))
@@ -174,7 +172,7 @@
         [:attrs handler-key handler-fn]))))                 ;; Add inside field-m's :attrs
 
 
-(defn- decide-renderer
+(defn- decide-render
   "Typically we use the default renderer, but here we allow for a custom one.
   Typically for things like identicon and synthetic fields"
   [{:keys [render] :as cfg}]
@@ -196,13 +194,13 @@
    {:k (:k field-value-cfg)}                                ;; Note: It's called :k instead of :field to avoid confusing with the Field we create for it
    add-raw-value                                            ;; Allways. Do early so others can use it
    (decide-description field-value-cfg)
-   (decide-display-value field-value-cfg)
+   (decide-display field-value-cfg)
    (decide-tooltip field-value-cfg)                         ;; After :display as we might want to use info that was looked up
    (decide-class field-value-cfg)
    (decide-react-key-attr field-value-cfg)
    (decide-tag field-value-cfg)
    (decide-handler :on-click field-value-cfg)
-   (decide-renderer field-value-cfg)])
+   (decide-render field-value-cfg)])
 
 
 (defn- produce-factory-parts-for-field
@@ -214,13 +212,13 @@
    {:k (:k field-cfg)}                                      ;; Note: It's called :k instead of :field to avoid confusing with the Field we create for it
    add-raw-value                                            ;; Useful for plain field?
    (decide-description field-cfg)
-   (decide-display-value field-cfg)
+   (decide-display field-cfg)
    (decide-tooltip field-cfg)                               ;; After :display as we might want to use info that was looked up
    (decide-class field-cfg)
    (decide-react-key-attr field-cfg)
    (decide-tag field-cfg)
    (decide-handler :on-click field-cfg)
-   (decide-renderer field-cfg)])
+   (decide-render field-cfg)])
 
 
 ;|-------------------------------------------------
