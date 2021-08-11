@@ -2,11 +2,15 @@
   (:require [clojure.string :as str]
             [clojure.spec.alpha :as s]
             [clojure.set :refer [rename-keys]]
+            [plug-debug.core :as d]
             [plug-field.defaults :as defaults]
             [plug-field.specs.core :as $]
             [plug-field.specs.config :as $cfg]
             [plug-field.specs.field :as $field]))
 
+
+;|-------------------------------------------------
+;| RECORD
 
 (defrecord Field [k display render tag]
   IFn
@@ -17,7 +21,19 @@
 
 
 ;|-------------------------------------------------
-;| CONFIG COMPILATION
+;| HELPERS
+
+(defn- arity
+  "Find the arity of a function.
+  Works on both named and anonymous functions"
+  [function]
+  (.-length function))
+
+
+;|-------------------------------------------------
+;| FUNCTIONS RESPONSIBLE FOR EVALUATING PARTS OF A CONFIG
+;|
+;| - What they return is considered raw parts for a Field factory
 
 (defn- add-raw-value
   "A function that will ensure raw value :v is added to every field (Field) so that 'deciders' can utilize its value"
@@ -37,8 +53,7 @@
   (cond
     (fn? tooltip) (fn [field-m entity]
                     (assoc-in field-m [:attrs :title] (tooltip entity)))
-    (some? tooltip) (fn [field-m _]
-                      (assoc-in field-m [:attrs :title] tooltip))
+    (some? tooltip) [:attrs :title tooltip]                 ;; Add inside field-m's :attrs
     :else nil))
 
 
@@ -93,8 +108,7 @@
     (if (fn? class)
       (fn [field-m entity]
         (assoc-in field-m [:attrs :class] (class entity cfg)))
-      (fn [field-m _]
-        (assoc-in field-m [:attrs :class] class)))))
+      [:attrs :class class])))                              ;; Path in field-m where we want this value
 
 
 (defn- decide-react-key-attr
@@ -122,15 +136,8 @@
     {:tag tag}))
 
 
-(defn- arity
-  "Find the arity of a function.
-  Works on both named and anonymous functions"
-  [function]
-  (.-length function))
-
-
 (defn- decide-handler
-  "Allow for custom event handler functions with multiple arities
+  "Allow for custom event handler functions with multiple arities in case more than the event itself is needed.
   [event]                  -- Plain handler getting just the js event
   [entity event]           -- + full entity map this Field was created from
   [entity field-cfg event] -- + the field config used to create Field"
@@ -146,8 +153,7 @@
         3 (fn [field-m entity]
             (assoc-in field-m [:attrs handler-key]
                       (partial handler-fn entity cfg)))
-        (fn [field-m entity]
-          (assoc-in field-m [:attrs handler-key] handler-fn))))))
+        [:attrs handler-key handler-fn]))))                 ;; Add inside field-m's :attrs
 
 
 (defn- decide-renderer
@@ -160,70 +166,143 @@
     {:render render}))                                      ;; Call the render provided in config.
 
 
-(defn- make-factory-parts-from-a-field-value-config
-  "Turn the config for a given field value into collection of parts (maps & fns) needed to
-  assemble a field according to config."
-  [field-value-cfg field-defaults]
-  (->> [field-defaults
-        {:k (:k field-value-cfg)}                           ;; Note: It's called :k instead of :field to avoid confusing with the Field we create for it
-        add-raw-value                                       ;; Allways. Do early so others can use it
-        (decide-display-value field-value-cfg)
-        (decide-tooltip field-value-cfg)                    ;; After :display as we might want to use info that was looked up
-        (decide-class field-value-cfg)
-        (decide-react-key-attr field-value-cfg)
-        (decide-tag field-value-cfg)
-        (decide-handler :on-click field-value-cfg)
-        (decide-renderer field-value-cfg)]
-       (remove nil?)                                        ;; Remove nils caused by config possibilities not utilized by the field in question.
-       (group-by fn?)
-       ;(rename-keys)
-       ))
+;|-------------------------------------------------
+;| TYPE SPECIFIC PARTS MAKERS (FIELD VS FIELD VALUE)
+
+(defn- produce-factory-parts-for-field-value
+  "Create collection of factory parts for a Field based on 'value' in {:key value}
+  Will aid in producing Fields that are typically used as cells/contents in tables.
+  These raw parts are functions, maps and nils"
+  [field-defaults field-value-cfg]
+  [field-defaults
+   {:k (:k field-value-cfg)}                                ;; Note: It's called :k instead of :field to avoid confusing with the Field we create for it
+   add-raw-value                                            ;; Allways. Do early so others can use it
+   (decide-display-value field-value-cfg)
+   (decide-tooltip field-value-cfg)                         ;; After :display as we might want to use info that was looked up
+   (decide-class field-value-cfg)
+   (decide-react-key-attr field-value-cfg)
+   (decide-tag field-value-cfg)
+   (decide-handler :on-click field-value-cfg)
+   (decide-renderer field-value-cfg)])
+
+
+(defn- produce-factory-parts-for-field
+  "Create collection of factory parts for a Field based on ':key' in {:key value}
+  Will aid in producing Fields that are typically used as headers in tables.
+  These raw parts are functions, maps and nils"
+  [field-defaults field-cfg]
+  [field-defaults
+   {:k (:k field-cfg)}                                      ;; Note: It's called :k instead of :field to avoid confusing with the Field we create for it
+   add-raw-value                                            ;; Useful for plain field?
+   (decide-display-value field-cfg)
+   (decide-tooltip field-cfg)                               ;; After :display as we might want to use info that was looked up
+   (decide-class field-cfg)
+   (decide-react-key-attr field-cfg)
+   (decide-tag field-cfg)
+   (decide-handler :on-click field-cfg)
+   (decide-renderer field-cfg)])
 
 
 ;|-------------------------------------------------
-;| PUBLIC
+;| ASSEMBLE FACTORY FROM PARTS
 
-(defn field-value-config->field-factory
-  "Create factory function for producing a single field.
-  That is, a function that will return and instance of Field when passed an entity (map).
+(defn- parts-group
+  "What variant is the part returned from config compilation (typically by decide-* functions)?"
+  [part]
+  (cond
+    (fn? part) :functions                                   ;; Work on field-m with data from an entity
+    (map? part) :maps                                       ;; Top level value in field-m (merge)
+    (coll? part) :colls                                     ;; Nested value in field-m (update-in)
+    :else :ignored))                                        ;; E.g. nils
 
-  This avoids re-evaluating the config pieces over and over for each entity that is to be processed.
 
-  Note: See the implementation of the functions used to see how config settings are combined and utilized."
-  [field-value-cfg field-defaults]
+(def ^:private group-factory-parts
+  (partial group-by parts-group))
+
+
+(defn- smart-updater
+  "Combine existing and new value in a predictable way.
+  'v2' is last entry from a factory part in vector form (signalling update-in)"
+  [v1 v2]
+  (cond
+    (map? v2) (merge v1 v2)                                 ;; Combine:      Overwrites if same key. Note: Before coll? as (coll? {}) => true
+    (some coll? [v1 v2]) (remove nil? (flatten [v1 v2]))    ;; Aggregate:    Vector signals that we might want more than one value, e.g. in :class
+    (string? v2) v2                                         ;; Overwrite:    String signals desire to overwrite
+    (some? v2) v2                                           ;; No overwrite: nil won't overwrite an existing value
+    :else v1))                                              ;; Keep:         No new value
+
+
+(defn- assemble-grouped-factory-parts
+  "Assemble parts into what will be the base field-m and the functions that will
+   work on it inside the factory when passed an actual entity map.
+   'field-m'   - The map that forms the basis for a Field. Starts out with defaults and via factory parts and functions it is merged and transformed into a field map;
+   'functions' - Functions that will help transform 'field-m' into a 'field' map\"
+   "
+  [{:keys [maps colls functions]}]
+  (let [field-m (reduce (fn [field-m coll]
+                          (update-in field-m (butlast coll) smart-updater (last coll)))
+                        (apply merge maps)
+                        colls)]
+    {:field-m   field-m
+     :functions functions}))
+
+
+(defn- factory-parts->factory
+  "Assemble a factory function from the compiled parts."
+  [{:keys [functions field-m]}]
+  (fn [entity]
+    (->> functions                                          ;; Take all the functions that will help prepare a field according to config. We use functions when we need data from the entity itself.
+         (reduce (fn [field-m func]                         ;; And apply each of them to the field map we have so far and the entity this field belongs to.
+                   (func field-m entity))
+                 field-m)                                   ;; TODO: Look into making this a transient and update all decide-* fns to use assoc! OBS: there is no assoc-in!
+         (map->Field))))
+
+
+;|-------------------------------------------------
+;| CREATE FACTORIES
+
+(defn- field-value-config->field-factory
+  "Turn the config for a given field value into collection of parts (maps & fns) needed to
+  assemble a field according to config."
+  [field-defaults parts-maker field-value-cfg]
   {:pre  []
    :post [(s/valid? ::$/factory %)]}
-  ;; NOTE: Sequence of deciders will matter here as later fns will see updated field-m (the map that we will pass to Field factory)
-  (let [{functions true                                     ;; Destructuring output of grouped result into 'functions' and 'maps'.
-         maps      false} (make-factory-parts-from-a-field-value-config field-value-cfg field-defaults) ;; Separate functions from maps so that the latter can go into the field-basis (accumulator map) used in reduce below.
-        field-m (apply merge maps)]                         ;; Base field on generic field defaults and whatever maps where returned above, before letting the returned functions alter it further.
-    ;; Return a factory function
-    (fn [entity]
-      (->> functions                                        ;; Take all the functions that will help prepare a field according to config. We use functions when we need data from the entity itself.
-           (reduce (fn [field-m func]                       ;; And apply each of them to the field map we have so far and the entity this field belongs to.
-                     (func field-m entity))
-                   field-m)                                 ;; TODO: Look into making this a transient and update all decide-* fns to use assoc! OBS: there is no assoc-in!
-           (map->Field)))))
+  (-> field-defaults
+      (parts-maker field-value-cfg)
+      (group-factory-parts)
+      (assemble-grouped-factory-parts)
+      (factory-parts->factory)))
 
 
-(defn field-value-configs->field-factories
-  "Create collection of field factories.
-
-  Compiles config for each of the desired fields into fields makers (functions creating a Field from an entity).
-
-  For each field, turn its config into a description of how to create Fields from based on entity maps."
-  [fields field-value-configs common-field-value-config field-defaults]
+(defn make-factories
+  "Create a collection of factory functions for given fields"
+  [parts-maker configs common-config field-defaults fields]
   {:pre  [(sequential? fields)
-          (map? field-value-configs)
-          (map? common-field-value-config)
+          (fn? parts-maker)
+          (map? configs)
           ;(s/valid? ::$cfg/field-value-configs field-value-configs) ;;FIXME: The full config map, not just for a single field
-          ]
+          (map? common-config)]
    :post [(s/valid? ::$/factories %)]}
   (let [xf (comp
-             (map #(-> (merge common-field-value-config     ;; Contains e.g. :lookup and other features all configs should have access to. Note: A specific config can override are it it merge on top.
-                              (get field-value-configs %))  ;; Get the config for the field in question ..
-                       (assoc :k %)))                       ;; add update that config with the field name.
-             (map #(field-value-config->field-factory % defaults/field-defaults)))]
-    ;; Create a collection of maps and functions that together will describe how to produce a given field from its config
+             (map #(-> (merge common-config                 ;; Contains e.g. :lookup and other features all configs should have access to. Note: A specific config can override are it it merge on top.
+                              (get configs %))              ;; Get the config for the field in question ..
+                       (assoc :k %)))                       ;; update config with the target field/key name.
+             (map #(field-value-config->field-factory
+                     field-defaults
+                     parts-maker
+                     %)))]
     (into [] xf fields)))
+
+
+;|-------------------------------------------------
+;| CONVENIENCE
+
+(def ^{:doc "Make field factories for map keys"}
+  make-field-factories
+  (partial make-factories produce-factory-parts-for-field))
+
+
+(def ^{:doc "Make field factories for map values"}
+  make-field-value-factories
+  (partial make-factories produce-factory-parts-for-field-value))
 

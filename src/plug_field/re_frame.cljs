@@ -37,11 +37,11 @@
           (map? common-field-value-config)]
    :post [(s/valid? ::$/factories %)]}
   ;(js/console.info "Making factories")
-  (pf/field-value-configs->field-factories
-    target-fields
+  (pf/make-field-value-factories
     field-value-configs
     common-field-value-config
-    defaults/field-defaults))
+    defaults/field-defaults
+    target-fields))
 
 
 ;|-------------------------------------------------
@@ -66,3 +66,20 @@
     (map produce-field-records entities)))                  ;; .. passing each entity to every factory
 
 
+(defn produce-fields-with-factories
+  "re-frame 'reg-sub' computation fn
+
+  Produces field value records
+  using factories on entities
+
+  NOTE: Takes a vector of args"
+  [[factories entities :as args-vector]]
+  {:pre [(sequential? args-vector)
+         (valid? ::$/factories factories)
+         (valid? ::$/entities entities)]
+   ;:post [(valid? ::$field/rows-of-records %)]
+   }                                                        ;; [[rec rec ,,,] [rec rec ,,,] ,,,]
+  ;; TODO: Change :post to check for Field
+  (let [produce-field-records (apply juxt factories)]       ;; Produce content by ..
+    ;(js/console.info "FIELDS" (map produce-field-records entities))
+    (map produce-field-records entities)))

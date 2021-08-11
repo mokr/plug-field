@@ -18,7 +18,8 @@
 
 ;; When we compile config into factory parts, we get either, map, fn or nil back.
 (s/def ::factory-part (s/nilable
-                        (s/or :map map?                     ;; Merged into default/acc for a field. Same data for multiple entities
+                        (s/or :map map?                     ;; Maps to be merged into field-m that acts as a base for a Field. => Same data for multiple entities
+                              :vector vector?               ;; [path to ,,, value] within field-m where we want to add something. Everything before 'value' is considered path
                               :func fn?)))                  ;; Function who's output depends on actual entity
 
 (s/def ::factory-parts (s/coll-of ::factory-part))
