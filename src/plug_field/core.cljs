@@ -261,14 +261,14 @@
 ;|-------------------------------------------------
 ;| CREATE FACTORIES
 
-(defn- field-value-config->field-factory
-  "Turn the config for a given field value into collection of parts (maps & fns) needed to
+(defn- config->field-factory
+  "Turn the config for a given field or field value into a factory that will
   assemble a field according to config."
-  [field-defaults parts-maker field-value-cfg]
+  [field-defaults parts-producer field-value-cfg]
   {:pre  []
    :post [(s/valid? ::$/factory %)]}
   (-> field-defaults
-      (parts-maker field-value-cfg)
+      (parts-producer field-value-cfg)
       (group-factory-parts)
       (assemble-grouped-factory-parts)
       (factory-parts->factory)))
@@ -276,9 +276,9 @@
 
 (defn make-factories
   "Create a collection of factory functions for given fields"
-  [parts-maker configs common-config field-defaults fields]
+  [parts-producer configs common-config field-defaults fields]
   {:pre  [(sequential? fields)
-          (fn? parts-maker)
+          (fn? parts-producer)
           (map? configs)
           ;(s/valid? ::$cfg/field-value-configs field-value-configs) ;;FIXME: The full config map, not just for a single field
           (map? common-config)]
@@ -287,9 +287,9 @@
              (map #(-> (merge common-config                 ;; Contains e.g. :lookup and other features all configs should have access to. Note: A specific config can override are it it merge on top.
                               (get configs %))              ;; Get the config for the field in question ..
                        (assoc :k %)))                       ;; update config with the target field/key name.
-             (map #(field-value-config->field-factory
+             (map #(config->field-factory
                      field-defaults
-                     parts-maker
+                     parts-producer
                      %)))]
     (into [] xf fields)))
 
