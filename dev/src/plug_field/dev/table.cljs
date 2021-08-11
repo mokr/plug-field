@@ -12,7 +12,7 @@
   :<- [::sample/common-header-config]
   :<- [::sample/field-defaults]
   :<- [::sample/target-fields]
-  pfrf/create-field-value-factories)
+  pfrf/create-field-factories)
 
 
 (rf/reg-sub
@@ -36,7 +36,7 @@
   :<- [::sample/common-content-config]
   :<- [::sample/field-defaults]
   :<- [::sample/target-fields]
-  pfrf/create-field-value-factories)
+  pfrf/create-field-factories)
 
 
 (rf/reg-sub
@@ -50,12 +50,9 @@
 
 (rf/reg-sub
   :table/data
-  :<- [::table-headers]                                     ;; Use this
-  ;:<- [::sample/target-fields]                              ;;DEBUG
+  :<- [::table-headers]
   :<- [::table-contents]
   (fn [[headers contents]]
-    ;(js/console.info "HEADERS:\n" headers)
-    ;(js/console.info contents)
     {:headers      headers
      :content-rows contents}))
 
@@ -63,20 +60,16 @@
 ;|-------------------------------------------------
 ;| UI
 
-(defn row-of-fields [fields]
+(defn header-row [fields]
   [:tr
    (for [field fields]
      ^{:key (:react-key field)}
      [field])])
 
-;;TODO: Go with 'header-rows' to allow for e.g. filter input below each header?
+
 (defn head-section [header-fields]
   [:thead
-   [row-of-fields header-fields]
-   #_[:tr
-      (for [field header-fields]
-        ^{:key (str field)}
-        [:th (str field)])]])
+   [header-row header-fields]])
 
 
 (defn content-row [fields]

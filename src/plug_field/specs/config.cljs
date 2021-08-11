@@ -37,5 +37,6 @@
                                              ::tooltip
                                              ::display
                                              ::on-click]))
+
 (s/def ::field-value-configs (s/coll-of ::field-value-config))
 

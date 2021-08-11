@@ -23,30 +23,7 @@
 ;|-------------------------------------------------
 ;| SUBSCRIPTION HELPERS
 
-;(defn create-field-value-factories
-;  "re-frame 'reg-sub' computation fn
-;
-;  Produces a collection of factory functions for field values
-;
-;  NOTE: Takes a vector of args:"
-;  [[field-value-configs common-field-value-config field-defaults target-fields :as args-vector]]
-;  {:pre  [(sequential? args-vector)
-;          ;(sequential? target-fields)
-;          (s/valid? ::$/target-fields target-fields)
-;          (map? field-value-configs)
-;          (map? common-field-value-config)]
-;   :post [(s/valid? ::$/factories %)]}
-;  ;(js/console.info "Making factories")
-;  (pf/make-field-value-factories
-;    field-value-configs
-;    common-field-value-config
-;    field-defaults
-;    target-fields))
-
-;(def create-field-value-factories
-;  (partial apply pf/make-field-value-factories))
-
-(defn create-field-value-factories [args]
+(defn create-field-factories [args]
   (apply pf/make-factories args))
 
 ;|-------------------------------------------------
