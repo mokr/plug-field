@@ -27,7 +27,8 @@
   "Find the arity of a function.
   Works on both named and anonymous functions"
   [function]
-  (.-length function))
+  (when (fn? function)
+    (.-length function)))
 
 
 ;|-------------------------------------------------
@@ -44,16 +45,33 @@
   (assoc field-m :v (get entity k)))
 
 
+(defn- decide-description
+  "Set :description according to config for this entity.
+  Note: Might be overwritten by later lookup"
+  [{:keys [description] :as cfg}]
+  {:pre  []
+   :post [(s/valid? ::$/factory-part %)]}
+  (when (some? description)
+    {:description description}))
+
+
 (defn- decide-tooltip
   "Return either a function that will add a :title attr to field map,
   or nil to signal that tooltip creation can be skipped for this field."
-  [{:keys [tooltip source-field] :as field-value-cfg}]
+  [{:keys [tooltip description source-field] :as field-value-cfg}]
   {:pre  []
    :post [(s/valid? ::$/factory-part %)]}
   (cond
     (fn? tooltip) (fn [field-m entity]
-                    (assoc-in field-m [:attrs :title] (tooltip entity)))
+                    (js/console.info "(arity tooltip)" (arity tooltip))
+                    (js/console.info "field-value-cfg" field-value-cfg)
+                    (assoc-in field-m [:attrs :title]
+                              (case (arity tooltip)         ;; Note: No default case, as other arities are invalid and should cause error.
+                                1 (tooltip entity)
+                                2 (tooltip entity field-m)
+                                3 (tooltip entity field-m field-value-cfg))))
     (some? tooltip) [:attrs :title tooltip]                 ;; Add inside field-m's :attrs
+    (some? description) [:attrs :title description]         ;; Add inside field-m's :attrs
     :else nil))
 
 
@@ -177,6 +195,7 @@
   [field-defaults
    {:k (:k field-value-cfg)}                                ;; Note: It's called :k instead of :field to avoid confusing with the Field we create for it
    add-raw-value                                            ;; Allways. Do early so others can use it
+   (decide-description field-value-cfg)
    (decide-display-value field-value-cfg)
    (decide-tooltip field-value-cfg)                         ;; After :display as we might want to use info that was looked up
    (decide-class field-value-cfg)
@@ -194,6 +213,7 @@
   [field-defaults
    {:k (:k field-cfg)}                                      ;; Note: It's called :k instead of :field to avoid confusing with the Field we create for it
    add-raw-value                                            ;; Useful for plain field?
+   (decide-description field-cfg)
    (decide-display-value field-cfg)
    (decide-tooltip field-cfg)                               ;; After :display as we might want to use info that was looked up
    (decide-class field-cfg)

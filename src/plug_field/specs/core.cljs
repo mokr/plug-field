@@ -17,7 +17,7 @@
 ;| - The parts needed in a given factory to create a Field according to config
 
 ;; When we compile config into factory parts, we get either, map, fn or nil back.
-(s/def ::factory-part (s/nilable
+(s/def ::factory-part (s/nilable                            ;; nil when config has nothing affecting this decision
                         (s/or :map map?                     ;; Maps to be merged into field-m that acts as a base for a Field. => Same data for multiple entities
                               :vector vector?               ;; [path to ,,, value] within field-m where we want to add something. Everything before 'value' is considered path
                               :func fn?)))                  ;; Function who's output depends on actual entity

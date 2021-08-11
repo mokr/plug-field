@@ -49,9 +49,11 @@
 
 (def field-value-config
   {:user/age        {:tooltip "This is how old I am"}
-   :user/name       {:tooltip (fn [m]
-                                (str "Name in uppercase: " (str/upper-case (:user/name m))))}
-   :company/city    {:on-click #(js/console.info "Click event:" %)}
+   :user/name       {:tooltip (fn [entity]
+                                (str "Name in uppercase: " (str/upper-case (:user/name entity))))}
+   :company/city    {:tooltip  (fn [entity field-m]
+                                 (str "field-m:\n" field-m))
+                     :on-click #(js/console.info "Click event:" %)}
    :company/name    {:class    "has-text-primary"
                      ;:on-click #(js/console.info "Clicked" %)
                      :on-click (fn [entity event]
@@ -61,9 +63,15 @@
                      :on-click (fn [entity cfg event]
                                  (js/console.info "Clicked entity" entity "with cfg:" cfg)
                                  )
+                     :tooltip  "Private info"
                      :display  "***"}
-   :some/details    {:display "debug"
-                     :render  #(vector :td "<details>")}
+   :some/details    {:display     "debug"
+                     :description "Static description"
+                     ;:tooltip (fn [m]
+                     ;           (str "Just a tip\n" (:description m)))
+                     :render      (fn [this attrs]
+                                    (vector :td attrs "<details>"))
+                     }
    })
 
 
