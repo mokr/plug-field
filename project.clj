@@ -21,7 +21,7 @@
                           [re-frame "1.2.0"]
                           [reagent "1.1.0"]
                           [re-frisk "1.5.1"]
-                          [thheller/shadow-cljs "2.15.2" :scope "provided"]]
+                          [thheller/shadow-cljs "2.15.3" :scope "provided"]]
 
          :source-paths   ["src" "dev/src"]
          :resource-paths ["dev/resources"]

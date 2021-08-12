@@ -15,7 +15,7 @@
                    :output-dir "dev/resources/public/js"
                    ;:output-dir "target/cljsbuild/public/js"
                    :asset-path "/js"
-                   :modules    {:app {:init-fn plug-field.dev.app/init}}
+                   :modules    {:app {:init-fn plug-field.dev.app/start}}
                    :devtools   {:watch-dir "dev/resources/public"
                                 :preloads  [re-frisk.preload]
                                 }
