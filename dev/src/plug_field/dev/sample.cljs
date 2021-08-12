@@ -3,15 +3,14 @@
             [re-frame.core :as rf]
             [clojure.string :as str]))
 
+
 (def target-fields
-  [
-   :user/name
+  [:user/name
    :user/age
    :company/city
    :company/name
    :user/vaccinated
-   :some/details
-   ])
+   :some/details])
 
 
 (rf/reg-sub
@@ -57,8 +56,7 @@
                      }
    :user/vaccinated {:_custom  "Data we might need in custom handler"
                      :on-click (fn [entity cfg event]
-                                 (js/console.info "Clicked entity" entity "with cfg:" cfg)
-                                 )
+                                 (js/console.info "Clicked entity" entity "with cfg:" cfg))
                      :tooltip  "Private info"
                      :display  "***"}
    :some/details    {:display     "debug"
@@ -68,23 +66,3 @@
                      :render      (fn [this attrs]
                                     (vector :td attrs "<details>"))}})
 
-
-(rf/reg-sub
-  ::field-defaults
-  (fn [_ _]
-    defaults/field-defaults))
-
-
-(rf/reg-sub
-  ::common-content-config
-  (fn [_ _]
-    {:tag :td}))
-
-(rf/reg-sub
-  ::common-header-config
-  (fn [_ _]
-    {:tag :th}))
-
-(comment
-  ;(sort (keys field-value-config))
-  )

@@ -1,8 +1,13 @@
 (ns plug-field.re-frame
+  "Everything re-frame related when creating and using Fields.
+
+  Like:
+  - Registering and retrieving config for field creation for both keys and values
+  - Event handlers for e.g. factory creation and usage
+  - Subscriptions to default data that goes into the creation"
   (:require
-    [plug-debug.core :as d]
     [plug-field.core :as pf]
-    [plug-field.defaults :as defaults]
+    [plug-field.defaults :as default]
     [clojure.spec.alpha :as s]
     [plug-field.specs.core :as $]
     [plug-field.specs.config :as $cfg]
@@ -119,11 +124,15 @@
 
 (defn produce-with-factories
   "re-frame 'reg-sub' computation fn
+  for producing field records
 
-  Produces field value records
-  using factories on entities
-
-  NOTE: Takes a vector of args"
+  'arg' is either:
+  [coll-of-factories]
+  or:
+  [[coll-of-factories coll-of-entries]]
+s
+  Note:
+  For key fields we don't always need entries to run factories, hence the two variantss "
   [arg]
   ;; TODO: Change :post to check for Field
   ;{:pre [(sequential? args-vector)
@@ -131,15 +140,32 @@
   ;       (valid? ::$/entities entities)]
   ;:post [(valid? ::$field/rows-of-records %)]
   ;}                                                        ;; [[rec rec ,,,] [rec rec ,,,] ,,,]
-  ;(js/console.info "produce-with-factories arg" arg)
   (if (coll-of-colls? arg)
-    ;; TYPICALLY FIELD/KEY VALUE
-    (let [[factories entities] arg
+    (let [[factories entities] arg                          ;; <- TYPICALLY FIELD/KEY VALUE
           produce-field-records (apply juxt factories)]     ;; Make a function that will apply each factory to input
-      ;(js/console.info "entities" entities)
       (map produce-field-records entities))                 ;; Pass each entity to all factories to produce actual Fields
-    ;; TYPICALLY PLAIN FIELD/KEY
-    (let [factories arg]
-      ;(println "HEAD factories" factories)
-      (map #(% {}) factories)))                             ;; Just run factories with an empty map
-  )
+    (let [factories arg]                                    ;; <- TYPICALLY PLAIN FIELD/KEY
+      (map #(% {}) factories))))                            ;; Just run factories with an empty map
+
+
+;|-------------------------------------------------
+;| SUBSCRIBE TO DEFAULT CONFIG
+
+(rf/reg-sub
+  ::common-content-config
+  (fn [db [_ overrides]]
+    (merge default/common-content-config
+           overrides)))
+
+
+(rf/reg-sub
+  ::common-header-config
+  (fn [db [_ overrides]]
+    (merge default/common-header-config
+           overrides)))
+
+(rf/reg-sub
+  ::field-defaults
+  (fn [db [_ overrides]]
+    (merge default/field-defaults
+           overrides)))
