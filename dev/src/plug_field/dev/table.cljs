@@ -8,7 +8,7 @@
 
 (rf/reg-sub
   ::header-factories
-  :<- [::sample/fields-config]
+  :<- [::pfrf/key-config]
   :<- [::sample/common-header-config]
   :<- [::sample/field-defaults]
   :<- [::sample/target-fields]
@@ -22,17 +22,9 @@
   pfrf/produce-with-factories)
 
 
-;(rf/reg-sub
-;  ::field-value-factories
-;  :<- [::sample/target-fields]
-;  :<- [::sample/field-values-config]
-;  :<- [::sample/common-content-config]
-;  :<- [::sample/field-defaults]
-;  pfrf/create-field-value-factories)
-
 (rf/reg-sub
   ::field-value-factories
-  :<- [::sample/field-values-config]
+  :<- [::pfrf/value-config]
   :<- [::sample/common-content-config]
   :<- [::sample/field-defaults]
   :<- [::sample/target-fields]
@@ -43,9 +35,7 @@
   ::table-contents
   :<- [::field-value-factories]
   :<- [:sample/entities]
-  ;pfrf/produce-value-fields-with-factories
-  pfrf/produce-with-factories
-  )
+  pfrf/produce-with-factories)
 
 
 (rf/reg-sub

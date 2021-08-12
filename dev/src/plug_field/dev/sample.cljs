@@ -43,12 +43,6 @@
    :user/vaccinated {:display "Vaccinated?"}})
 
 
-(rf/reg-sub
-  ::fields-config
-  (fn [_ _]
-    field-config))
-
-
 (def field-value-config
   {:user/age        {:tooltip "This is how old I am"}
    :user/name       {:tooltip (fn [entity]
@@ -72,15 +66,7 @@
                      ;:tooltip (fn [m]
                      ;           (str "Just a tip\n" (:description m)))
                      :render      (fn [this attrs]
-                                    (vector :td attrs "<details>"))
-                     }
-   })
-
-
-(rf/reg-sub
-  ::field-values-config
-  (fn [_ _]
-    field-value-config))
+                                    (vector :td attrs "<details>"))}})
 
 
 (rf/reg-sub
