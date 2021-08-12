@@ -24,7 +24,7 @@
    :header-row-classes  nil})
 
 
-(defn- config-selection
+(defn- config-selection-with-override-support
   "Performs flexible config selection
   []               => use defaults for Bulma
   [type]           => LATER: Pass e.g :bootstrap to get Bootstrap styling instead of Bulma
@@ -47,7 +47,7 @@
 
 (rf/reg-sub
   ::default-config
-  config-selection)                                         ; use default with overrides merged in
+  config-selection-with-override-support)                   ; use default with overrides merged in
 
 
 ;|-------------------------------------------------

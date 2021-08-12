@@ -1,6 +1,8 @@
 (ns plug-field.defaults
-  "Some defaults that are handy as a starting point.
-  Note: Subscriptions to these are available when requiring [plug-field.re-frame]")
+  "Some defaults that are handy as a starting point when working with Fields.
+  Notes:
+  - Subscriptions to these are available when requiring [plug-field.re-frame]
+  - Defaults for e.g. [plug-field.ui.table] is in that specific ns (incl re-frame subsriptions).")
 
 
 (def field-defaults
