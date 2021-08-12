@@ -130,7 +130,7 @@
   [coll-of-factories]
   or:
   [[coll-of-factories coll-of-entries]]
-s
+
   Note:
   For key fields we don't always need entries to run factories, hence the two variantss "
   [arg]

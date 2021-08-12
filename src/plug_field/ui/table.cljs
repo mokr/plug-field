@@ -35,7 +35,6 @@
   'type' is a keyword like :bulma and :bootstrap
   'overrides' is a config map that will be merged in to the defaults "
   [_ [_ arg1 arg2]]
-  (js/console.info "arg1" arg1 "arg2" arg2)
   (cond
     (nil? arg1) default-config-bulma                        ; use default config
     (map? arg2) (case arg1                                  ; use specific default with overrides merged in.
