@@ -26,13 +26,6 @@
 
 
 ;|-------------------------------------------------
-;| HELPERS
-
-(defn- coll-of-colls? [arg]
-  (every? sequential? arg))
-
-
-;|-------------------------------------------------
 ;| SET / GET HANDLING
 
 (defn- merge-in-key-config [db domain cfg]
@@ -161,7 +154,8 @@
 
 
 (defn as-table-data
-  "Turn headers "
+  "re-frame 'reg-sub' computation fn for turning data from multiple subscriptions
+  into the map taken as input by plug-field.ui.table/component"
   [[headers contents table-config]]
   {:pre  [(sequential? headers) (sequential? contents) (map? table-config)]
    :post [(map? %)]}

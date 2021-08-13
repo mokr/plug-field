@@ -296,7 +296,7 @@
 ;| PRODUCE WITH FACTORIES
 
 (defn- run-factories-on-single-entity
-  "Create a map that represents the Fields for a single entry/map.
+  "Create a map that represents the Fields for a single entity/map.
   Typically the data for a single row in a table where each factory is responsible for one cell and
   all cells in the row belongs to the same entity.
 

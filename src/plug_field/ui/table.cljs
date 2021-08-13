@@ -34,13 +34,13 @@
   So:
   'type' is a keyword like :bulma and :bootstrap
   'overrides' is a config map that will be merged in to the defaults "
-  [_ [_ arg1 arg2]]
+  [_ [_ arg1 overrides]]
   (cond
     (nil? arg1) default-config-bulma                        ; use default config
-    (map? arg2) (case arg1                                  ; use specific default with overrides merged in.
-                  :bulma (merge default-config-bulma arg2)
-                  ;:bootstrap (merge default-config-bootstrap arg2)
-                  (merge default-config-bulma arg2))
+    (map? overrides) (case arg1                             ; use specific default with overrides merged in.
+                       :bulma (merge default-config-bulma overrides)
+                       ;:bootstrap (merge default-config-bootstrap overrides)
+                       (merge default-config-bulma overrides))
     (map? arg1) (merge default-config-bulma arg1)))
 
 
