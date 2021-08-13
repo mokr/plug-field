@@ -1,7 +1,6 @@
 (ns plug-field.core
   (:require [clojure.spec.alpha :as s]
             [clojure.set :refer [rename-keys]]
-            [plug-debug.core :as d]
             [plug-field.specs.core :as $]
             [plug-field.specs.config :as $cfg]
             [plug-field.specs.field :as $field]

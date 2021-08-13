@@ -1,7 +1,6 @@
 (ns plug-field.dev.repl
   (:require [clojure.string :as str]
             [plug-field.defaults :as defaults]
-            [plug-debug.core :as d]
             [plug-field.core :as pf :refer [config->field-factory]]))
 
 

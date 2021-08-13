@@ -15,7 +15,6 @@
 
   :profiles {:dev
              {:dependencies   [[binaryage/devtools "1.0.3"]
-                               [net.clojars.mokr/plug-debug "0.1.0-SNAPSHOT"]
                                [net.clojars.mokr/plug-utils "0.1.0-SNAPSHOT"]
                                [re-frame "1.2.0"]
                                [reagent "1.1.0"]
