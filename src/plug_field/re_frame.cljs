@@ -113,43 +113,7 @@
 
 
 ;|-------------------------------------------------
-;| SUBSCRIPTION HELPERS
-
-(defn create-field-factories [args]
-  (apply pf/make-factories args))
-
-
-;|-------------------------------------------------
-;| EVENT HELPERS
-
-(defn produce-with-factories
-  "re-frame 'reg-sub' computation fn
-  for producing field records
-
-  'arg' is either:
-  [coll-of-factories]
-  or:
-  [[coll-of-factories coll-of-entries]]
-
-  Note:
-  For key fields we don't always need entries to run factories, hence the two variantss "
-  [arg]
-  ;; TODO: Change :post to check for Field
-  ;{:pre [(sequential? args-vector)
-  ;       (valid? ::$/factories factories)
-  ;       (valid? ::$/entities entities)]
-  ;:post [(valid? ::$field/rows-of-records %)]
-  ;}                                                        ;; [[rec rec ,,,] [rec rec ,,,] ,,,]
-  (if (coll-of-colls? arg)
-    (let [[factories entities] arg                          ;; <- TYPICALLY FIELD/KEY VALUE
-          produce-field-records (apply juxt factories)]     ;; Make a function that will apply each factory to input
-      (map produce-field-records entities))                 ;; Pass each entity to all factories to produce actual Fields
-    (let [factories arg]                                    ;; <- TYPICALLY PLAIN FIELD/KEY
-      (map #(% {}) factories))))                            ;; Just run factories with an empty map
-
-
-;|-------------------------------------------------
-;| SUBSCRIBE TO DEFAULT CONFIG
+;| SUBSCRIBE TO (DEFAULT) CONFIGS
 
 (rf/reg-sub
   ::common-content-config
@@ -169,3 +133,56 @@
   (fn [db [_ overrides]]
     (merge default/field-defaults
            overrides)))
+
+;; Config for a row
+(rf/reg-sub
+  ::row-config
+  (fn [db [_ specific-config]]                              ;; Here you might want to pass in e.g. {:react-key :db/id}
+    specific-config))
+
+
+;; We have no real entities, so a vector with an empty map is used for factories to run on.
+(rf/reg-sub
+  ::no-entities
+  (fn [_ _]
+    [{}]))
+
+
+;|-------------------------------------------------
+;| SUBSCRIPTION HELPERS
+
+(defn create-field-factories
+  "re-frame 'reg-sub' computation fn for creating factories from args vector:
+  [[configs common-config field-defaults fields]]
+
+  Where configs is configs for multiple keys or key-values"
+  [args]
+  (apply pf/make-factories args))
+
+
+(defn as-table-data
+  "Turn headers "
+  [[headers contents table-config]]
+  {:pre  [(sequential? headers) (sequential? contents) (map? table-config)]
+   :post [(map? %)]}
+  {:header-row   (first headers)                            ;; There is only one header-entity, so we pass just that to table.
+   :content-rows contents
+   :cfg          table-config})
+
+
+;|-------------------------------------------------
+;| EVENT HELPERS
+
+(defn produce-field-entities-with-factories
+  "re-frame 'reg-sub' computation fn for creating maps containing
+  the Field records produced by running all factories for a given entity
+  and also the react-key that can be used for e.g. a row presenting these Fields
+
+  entity-config supports customizing how :rect-key is created.
+
+  RETURNS:
+  [{:react-id ___ :fields [Field Field ,,,]} ,,,]"
+  [[factories entities entity-config]]
+  (let [entities (or (seq entities) [{}])                   ;; Ensure nil end [] => [{}] to run factories on an empty entity (typically for producing headers)
+        config   (or entity-config {})]                     ;; Just to allow nil if there is no entity-config
+    (pf/produce-with-factories factories entities config)))

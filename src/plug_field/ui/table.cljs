@@ -59,9 +59,10 @@
      [field])])
 
 
-(defn head-section [header-fields cfg]
+(defn head-section [{:keys [fields react-key]} cfg]
   [:thead (class-when cfg :thead-classes)
-   [header-row header-fields]])
+   ^{:key react-key}
+   [header-row fields]])
 
 
 (defn content-row [fields cfg]
@@ -71,19 +72,19 @@
      [field])])
 
 
-(defn body-section [content-rows cfg]
+(defn body-section [row-entities cfg]
   [:tbody (class-when cfg :tbody-classes)
-   (for [entries content-rows]
-     ^{:key (str entries)}
-     [content-row entries])])
+   (for [{:keys [fields react-key]} row-entities]
+     ^{:key react-key}
+     [content-row fields])])
 
 
 ;|-------------------------------------------------
 ;| TABLE COMPONENT
 
-(defn component [{:keys [headers content-rows cfg]}]
+(defn component [{:keys [header-row content-rows cfg]}]
   [:div (class-when cfg :wrapper-classes)
    [:table (class-when cfg :table-classes)
-    [head-section headers cfg]
+    [head-section header-row cfg]
     [body-section content-rows cfg]]])
 

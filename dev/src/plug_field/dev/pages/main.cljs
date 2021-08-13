@@ -8,8 +8,5 @@
 
 (defn page []
   [:section.section>div.container>div.content
-   [:h1 "plug-field DEV"]
-   ;[:div "Hi, from example!"]
-   [:h2 "Table demo"]
-   [pf-table/component (<sub [::dev-table/table-data])]
-   ])
+   [:h1 "Table demo"]
+   [pf-table/component (<sub [::dev-table/table-data])]])

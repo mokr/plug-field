@@ -17,7 +17,9 @@
 (rf/reg-sub
   ::table-headers
   :<- [::header-factories]
-  pfrf/produce-with-factories)
+  :<- [::pfrf/no-entities]
+  :<- [::pfrf/row-config {:react-key "header-for-sample-table"}]
+  pfrf/produce-field-entities-with-factories)
 
 
 (rf/reg-sub
@@ -33,7 +35,8 @@
   ::table-contents
   :<- [::field-value-factories]
   :<- [:sample/entities]
-  pfrf/produce-with-factories)
+  :<- [::pfrf/row-config {:react-key :db/id}]
+  pfrf/produce-field-entities-with-factories)
 
 
 (rf/reg-sub
@@ -41,8 +44,5 @@
   :<- [::table-headers]
   :<- [::table-contents]
   :<- [::pf-table/default-config]
-  (fn [[headers contents table-config]]
-    {:headers      headers
-     :content-rows contents
-     :cfg          table-config}))
+  pfrf/as-table-data)
 

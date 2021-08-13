@@ -1,9 +1,7 @@
 (ns plug-field.core
-  (:require [clojure.string :as str]
-            [clojure.spec.alpha :as s]
+  (:require [clojure.spec.alpha :as s]
             [clojure.set :refer [rename-keys]]
             [plug-debug.core :as d]
-    ;[plug-field.defaults :as defaults]
             [plug-field.specs.core :as $]
             [plug-field.specs.config :as $cfg]
             [plug-field.specs.field :as $field]
@@ -292,3 +290,46 @@
 
                      %)))]
     (into [] xf fields)))
+
+
+;|-------------------------------------------------
+;| PRODUCE WITH FACTORIES
+
+(defn- run-factories-on-single-entity
+  "Create a map that represents the Fields for a single entry/map.
+  Typically the data for a single row in a table where each factory is responsible for one cell and
+  all cells in the row belongs to the same entity.
+
+  For context:
+  We typically have an entity from DB and from this entity we want to present specific keys.
+  For each such key we have created a factory.
+  Passing the entity to a factory produces a Field for presenting one such key.
+  Given the list of factories we produce Fields for each entity key we want to present.
+  This is typically presented in a table, and hence a :react-key is provided to make it
+  easy to fulfill Reacts need for a :key on the presented row (of Fields).
+
+  Note:
+  How the :react-key is populated can be customized via 'entity-config'
+
+  RETURNS:
+  {:react-id  ___
+   :fields    [Field Field ,,,]} "
+  [entity factories {:keys [react-key] :as entity-config}]
+  (let [fields (map #(% entity) factories)]
+    {:react-key (cond                                       ;; Allows config to dictate that e.g. entity's :db/id should be used as react-id
+                  (ifn? react-key) (react-key entity)       ;; Keyword or function.
+                  (string? react-key) react-key             ;; Static string. Note: Use fn if string key lookup is neededKey lookup
+                  :else (get :k (ffirst fields)))           ;; Default: Use the key/attr ':k' that the first Field represents.
+     :fields    fields}))
+
+
+(defn produce-with-factories
+  "Produce collection of maps that contains the fields produces by factories among other data.
+  [{:react-id ___ :fields [Field Field ,,,]}]
+  Typically each map is used to populate a single row in a table.
+
+  When no entities are provided, factories are run with an empty map as entry. Typically when producing fields for a header row."
+  [factories entities entity-config]
+  {:pre  [(s/valid? ::$/factories factories) (map? entity-config) (sequential? entities)]
+   :post [(sequential? %)]}
+  (map #(run-factories-on-single-entity % factories entity-config) entities))
