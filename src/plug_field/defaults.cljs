@@ -23,4 +23,6 @@
 (def common-header-config
   "Config that is common to all content fields.
   That is, fields that represent the key/attr itself (typically as a header)"
-  {:tag :th})
+  {:tag     :th
+   :display (fn [field-m entity]                            ;; Ensure header fields with no specific config are presented with stringified key. => Easy to spot where config is missing or just get data displayed.
+              (str (:k field-m)))})

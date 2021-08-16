@@ -10,7 +10,8 @@
    :company/city
    :company/name
    :user/vaccinated
-   :some/details])
+   :some/details
+   :field/without-config])
 
 
 (rf/reg-sub
