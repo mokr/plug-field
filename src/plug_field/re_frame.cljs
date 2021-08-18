@@ -24,6 +24,15 @@
 (def ^:private VALUE-CONFIG ::value-config)
 (def ^:private DEFAULT-DOMAIN :_default)
 
+;|-------------------------------------------------
+;| HELPERS
+
+(defn- transpose
+  "Transpose a matrix (coll-of-colls)
+  Ex: [[a1 a2 a3] [b1 b2 b3]] => [[a1 b1] [a2 b2] [a3 b3]] "
+  [matrix]
+  (apply mapv vector matrix))
+
 
 ;|-------------------------------------------------
 ;| SET / GET HANDLING
@@ -109,17 +118,19 @@
 ;| SUBSCRIBE TO (DEFAULT) CONFIGS
 
 (rf/reg-sub
-  ::common-content-config
-  (fn [db [_ overrides]]
-    (merge default/common-content-config
-           overrides)))
-
-
-(rf/reg-sub
   ::common-header-config
   (fn [db [_ overrides]]
     (merge default/common-header-config
            overrides)))
+
+
+(rf/reg-sub
+  ::common-content-config
+  (fn [db [_ overrides]]
+    ;(js/console.info "OVERRIDES:" overrides)
+    (merge default/common-content-config
+           overrides)))
+
 
 (rf/reg-sub
   ::field-defaults
@@ -155,13 +166,40 @@
 
 (defn as-table-data
   "re-frame 'reg-sub' computation fn for turning data from multiple subscriptions
-  into the map taken as input by plug-field.ui.table/component"
+  into the map taken as input by table component"
   [[headers contents table-config]]
   {:pre  [(sequential? headers) (sequential? contents) (map? table-config)]
    :post [(map? %)]}
   {:header-row   (first headers)                            ;; There is only one header-entity, so we pass just that to table.
    :content-rows contents
    :cfg          table-config})
+
+
+(defn- as-vtable-row-entity
+  "Create the map that represents a row in a vtable
+
+  {:react-key \"___\"
+   :fields    [Field Field ,,,]}"
+  [fields]
+  {:pre  [(every? record? fields)]
+   :post [(map? %)]}
+  {:react-key (:react-key (first fields))
+   :fields    fields})
+
+
+(defn as-vtable-data
+  "re-frame 'reg-sub' computation fn for turning data from multiple subscriptions
+  into the map taken as input by vtable component"
+  [[headers contents table-config]]
+  {:pre  [(sequential? headers) (sequential? contents) (map? table-config)]
+   :post [(map? %)]}
+  (let [header-fields  (:fields (first headers))
+        content-fields (map :fields contents)
+        rows           (->> (cons header-fields content-fields) ;; [[h1 h2] [c1 c2]]
+                            (transpose)                     ;;  => [[h1 c1] [h2 c2]]
+                            (map as-vtable-row-entity))]    ;;  => [{,,,}{,,,}]
+    {:rows rows
+     :cfg  table-config}))
 
 
 ;|-------------------------------------------------
@@ -175,7 +213,7 @@
   entity-config supports customizing how :rect-key is created.
 
   RETURNS:
-  [{:react-id ___ :fields [Field Field ,,,]} ,,,]"
+  [{:react-key ___ :fields [Field Field ,,,]} ,,,]"
   [[factories entities entity-config]]
   (let [entities (or (seq entities) [{}])                   ;; Ensure nil end [] => [{}] to run factories on an empty entity (typically for producing headers)
         config   (or entity-config {})]                     ;; Just to allow nil if there is no entity-config

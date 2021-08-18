@@ -127,9 +127,10 @@
 
 (defn- decide-react-key-attr
   ":key attr that works as a React ID when redering"
-  [{:keys [react-key k] :as cfg}]
+  [{:keys [react-key id-key k] :as cfg}]
   {:pre  []
    :post [(s/valid? ::$/factory-part %)]}
+  ;(js/console.info "cfg" cfg)
   (cond
     ;; React key generated per entity
     (fn? react-key) (fn [field-m entity]
@@ -137,8 +138,9 @@
     ;; React key is statically defined in config for this field
     (some? react-key) {:react-key react-key}
     ;; Creating a static value from the field name
-    :else (fn [field-m _]
-            (assoc field-m :react-key (str k)))))
+    :else (fn [field-m entity]
+            ;(js/console.info ">>>> REACT ID" id-key)
+            (assoc field-m :react-key (str (get entity id-key "H") k)))))
 
 
 (defn- decide-tag
@@ -286,7 +288,6 @@
                        (assoc :k %)))                       ;; update config with the target field/key name.
              (map #(config->field-factory
                      field-defaults
-
                      %)))]
     (into [] xf fields)))
 
@@ -313,10 +314,10 @@
   RETURNS:
   {:react-id  ___
    :fields    [Field Field ,,,]} "
-  [entity factories {:keys [react-key] :as entity-config}]
+  [entity factories {:keys [id-key react-key] :as entity-config}]
   (let [fields (map #(% entity) factories)]
     {:react-key (cond                                       ;; Allows config to dictate that e.g. entity's :db/id should be used as react-id
-                  (ifn? react-key) (react-key entity)       ;; Keyword or function.
+                  (ifn? id-key) (id-key entity)             ;; Keyword or function.
                   (string? react-key) react-key             ;; Static string. Note: Use fn if string key lookup is neededKey lookup
                   :else (get :k (ffirst fields)))           ;; Default: Use the key/attr ':k' that the first Field represents.
      :fields    fields}))

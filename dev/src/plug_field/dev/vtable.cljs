@@ -1,4 +1,4 @@
-(ns plug-field.dev.table
+(ns plug-field.dev.vtable
   (:require [re-frame.core :as rf]
             [plug-field.dev.sample :as sample]
             [plug-field.re-frame :as pfrf]
@@ -31,18 +31,46 @@
   pfrf/create-field-factories)
 
 
+;|-------------------------------------------------
+;| MULTIPLE ENTITIES
+
 (rf/reg-sub
-  ::table-contents
+  ::table-contents-multi
   :<- [::field-value-factories]
-  :<- [:sample/entities]
+  :<- [:sample/entities]                                    ;; Multiple entities
   :<- [::pfrf/row-config {:id-key :db/id}]
   pfrf/produce-field-entities-with-factories)
 
 
 (rf/reg-sub
-  ::table-data
+  ::vtable-data-multi
   :<- [::table-headers]
-  :<- [::table-contents]
+  :<- [::table-contents-multi]
   :<- [::pf-table/default-config]
-  pfrf/as-table-data)
+  pfrf/as-vtable-data)
 
+
+;|-------------------------------------------------
+;| SINGLE ENTRY (KV LISTING)
+
+(rf/reg-sub
+  ::just-one-entity
+  :<- [:sample/entities]
+  (fn [entities]
+    (take 1 entities)))
+
+
+(rf/reg-sub
+  ::table-contents-single
+  :<- [::field-value-factories]
+  :<- [::just-one-entity]                                   ;; Single entity (a kv listing)
+  :<- [::pfrf/row-config {:id-key :db/id}]
+  pfrf/produce-field-entities-with-factories)
+
+
+(rf/reg-sub
+  ::vtable-data-single
+  :<- [::table-headers]
+  :<- [::table-contents-single]
+  :<- [::pf-table/default-config]
+  pfrf/as-vtable-data)

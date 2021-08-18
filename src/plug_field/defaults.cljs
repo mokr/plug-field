@@ -16,8 +16,12 @@
 
 (def common-content-config
   "Config that is common to all content fields.
-  That is, fields that represent the value of a given key/attr in a map"
-  {:tag :td})
+  That is, fields that represent the value of a given key/attr in a map
+  :id-key -- A key for an entity that contains a unique ID. (eg: :db/id).
+             Part of when becomes :react-key
+  :tag    -- The HTML tag this field will render as"
+  {:id-key :id
+   :tag    :td})
 
 
 (def common-header-config

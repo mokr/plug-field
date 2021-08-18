@@ -26,16 +26,14 @@
 (s/def ::render fn?)
 
 ;; The map (field-m) passed to Field factory and also the final record
-(s/def ::map (s/and record?
-                    (s/keys :req-un [::k
-                                     ::react-key
-                                     ::tag
-                                     ::render]
-                            :opt-un [::attrs
-                                     ::display
-                                     ])))
+(s/def ::map (s/keys :req-un [::k
+                              ::react-key
+                              ::tag
+                              ::render]
+                     :opt-un [::attrs
+                              ::display]))
 
-;; While map for Field factory is being assembled
+;; While map ('field-m') for Field factory is being assembled
 (s/def ::in-the-making (s/keys :opt-un [::k
                                         ::react-key
                                         ::tag
@@ -47,7 +45,8 @@
 (s/def ::record (s/and record?
                        ::map))
 
-(s/def ::records (s/coll-of ::record))                      ;; [rec rec ,,,]
+;(s/def ::records (s/coll-of ::record))                      ;; [rec rec ,,,]
+(s/def ::records (s/every ::record))                        ;; [rec rec ,,,]
 
 ;;FIXME: Nested specs not allowed so this fails?
 ;(s/def ::rows-of-records (s/coll-of ::records))             ;; [[rec rec ,,,] [rec rec ,,,] ,,,] E.g. content rows for a table
