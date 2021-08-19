@@ -317,7 +317,7 @@
   [entity factories {:keys [id-key react-key] :as entity-config}]
   (let [fields (map #(% entity) factories)]
     {:react-key (cond                                       ;; Allows config to dictate that e.g. entity's :db/id should be used as react-id
-                  (ifn? id-key) (id-key entity)             ;; Keyword or function.
+                  (ifn? id-key) (str (id-key entity))       ;; Keyword or function.
                   (string? react-key) react-key             ;; Static string. Note: Use fn if string key lookup is neededKey lookup
                   :else (get :k (ffirst fields)))           ;; Default: Use the key/attr ':k' that the first Field represents.
      :fields    fields}))
