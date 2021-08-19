@@ -53,6 +53,19 @@
     {:description description}))
 
 
+(defn- decide-id
+  "Assign :id based on :id-key (the key to look up in entity).
+  Having :id simplifies e.g. on-click handlers as they can access (:id this) "
+  [{:keys [id-key] :as cfg}]
+  {:pre  []
+   :post [(s/valid? ::$/factory-part %)]}
+  (when (some? id-key)
+    (fn [field-m entity]
+      (if-let [id (get entity id-key)]                      ;; :id-key might be e.g. :db/id that represents the unique DB ID for this entity
+        (assoc field-m :id id)
+        field-m))))
+
+
 (defn- decide-tooltip
   "Return either a function that will add a :title attr to field map,
   or nil to signal that tooltip creation can be skipped for this field."
@@ -193,6 +206,7 @@
   [field-defaults
    {:k (:k field-value-cfg)}                                ;; Note: It's called :k instead of :field to avoid confusing with the Field we create for it
    add-raw-value                                            ;; Always. Do early so others can use it
+   (decide-id field-value-cfg)
    (decide-description field-value-cfg)
    (decide-display field-value-cfg)
    (decide-tooltip field-value-cfg)                         ;; After :display as we might want to use info that was looked up
