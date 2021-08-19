@@ -18,7 +18,7 @@
   ::table-headers
   :<- [::header-factories]
   :<- [::pfrf/no-entities]
-  :<- [::pfrf/row-config {:react-key "header-for-sample-table"}]
+  :<- [::pfrf/row-config {:react-key "header"}]
   pfrf/produce-field-entities-with-factories)
 
 

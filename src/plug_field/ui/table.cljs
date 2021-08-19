@@ -85,6 +85,8 @@
 (defn component [{:keys [header-row content-rows cfg]}]
   [:div (class-when cfg :wrapper-classes)
    [:table (class-when cfg :table-classes)
+    ^{:key "thead"}
     [head-section header-row cfg]
+    ^{:key "tbody"}
     [body-section content-rows cfg]]])
 
