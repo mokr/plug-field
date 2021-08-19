@@ -137,10 +137,10 @@
                       (assoc field-m :react-key (react-key entity cfg)))
     ;; React key is statically defined in config for this field
     (some? react-key) {:react-key react-key}
-    ;; Creating a static value from the field name
+    ;; Generate from field name and entity's value for the key specific by :id-key (if any)
     :else (fn [field-m entity]
             ;(js/console.info ">>>> REACT ID" id-key)
-            (assoc field-m :react-key (str (get entity id-key "H") k)))))
+            (assoc field-m :react-key (str (get entity id-key "H") k))))) ;; 'H' => we assume it's a header field
 
 
 (defn- decide-tag
