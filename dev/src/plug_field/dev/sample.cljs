@@ -65,5 +65,5 @@
                      ;:tooltip (fn [m]
                      ;           (str "Just a tip\n" (:description m)))
                      :render      (fn [this attrs]
-                                    (vector :td attrs "<details>"))}})
+                                    [:td attrs "<details>"])}})
 

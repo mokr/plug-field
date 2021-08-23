@@ -168,7 +168,7 @@
   "re-frame 'reg-sub' computation fn for turning data from multiple subscriptions
   into the map taken as input by table component"
   [[headers contents table-config]]
-  {:pre  [(sequential? headers) (sequential? contents) (map? table-config)]
+  {:pre  [(sequential? headers) (or (sequential? contents) (nil? contents)) (map? table-config)]
    :post [(map? %)]}
   {:header-row   (first headers)                            ;; There is only one header-entity, so we pass just that to table.
    :content-rows contents
@@ -215,6 +215,6 @@
   RETURNS:
   [{:react-key ___ :fields [Field Field ,,,]} ,,,]"
   [[factories entities entity-config]]
-  (let [entities (or (seq entities) [{}])                   ;; Ensure nil end [] => [{}] to run factories on an empty entity (typically for producing headers)
-        config   (or entity-config {})]                     ;; Just to allow nil if there is no entity-config
-    (pf/produce-with-factories factories entities config)))
+  (let [config (or entity-config {})]                       ;; Just to allow nil if there is no entity-config
+    (when (seq entities)
+      (pf/produce-with-factories factories entities config))))

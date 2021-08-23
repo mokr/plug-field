@@ -46,3 +46,27 @@
   :<- [::pf-table/default-config]
   pfrf/as-table-data)
 
+
+;|-------------------------------------------------
+;| EMPTY TABLE
+
+(rf/reg-sub
+  ::no-content
+  (fn []
+    nil))
+
+
+(rf/reg-sub
+  ::table-contents-empty
+  :<- [::field-value-factories]
+  :<- [::no-content]
+  :<- [::pfrf/row-config {:id-key :db/id}]
+  pfrf/produce-field-entities-with-factories)
+
+
+(rf/reg-sub
+  ::table-data-no-content
+  :<- [::table-headers]
+  :<- [::table-contents-empty]
+  :<- [::pf-table/default-config]
+  pfrf/as-table-data)

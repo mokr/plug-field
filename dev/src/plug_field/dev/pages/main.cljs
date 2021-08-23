@@ -16,6 +16,10 @@
    [err-boundary
     [pf-table/component (<sub [::dev-table/table-data])]]
 
+   [:h1 "Table demo (no content)"]
+   [err-boundary
+    [pf-table/component (<sub [::dev-table/table-data-no-content])]]
+
    [:h1 "vTable single (kv)"]
    [err-boundary
     [:div.columns
