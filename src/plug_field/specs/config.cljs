@@ -27,6 +27,7 @@
 (s/def ::tooltip (s/or :func fn?
                        :string string?))
 (s/def ::class (s/or :string string?
+                     :func fn?
                      :coll (s/coll-of string?)))            ;; Reagent joins into string
 (s/def ::lookup-as ::$/field-key)
 (s/def ::dom-event-handler fn?)
