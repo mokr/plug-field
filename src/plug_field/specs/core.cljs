@@ -3,12 +3,12 @@
 
 
 ;; Mote:
-;;   Technically an entities key/field/attr could be any type allowed as a map key,
+;;   Technically an entity's key/field/attr could be any type allowed as a map key,
 ;;   but in practice it is likely to be more limited and hence easier to spec
 (s/def ::field-key (s/or :keyword keyword?
                          :string string?))
-(s/def ::entity (s/or :map map?                             ;; Typically a map, but ..
-                      :record record?))                     ;; .. could be a record if we generate Fields from e.g. domain entities
+(s/def ::entity (s/nilable (s/or :map map?                  ;; Typically a map, but ..
+                                 :record record?)))         ;; .. could be a record if we generate Fields from e.g. domain entities
 (s/def ::entities (s/coll-of ::entity))
 (s/def ::target-fields (s/coll-of ::field-key))
 
